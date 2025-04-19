@@ -1,3 +1,19 @@
+# translation-editor
+
+-[x] Display all translations
+-[x] Search
+  -[ ] search by keypath or value, distinctly
+  -[ ] group translations by file
+  -[x] debounce search
+-[x] Propose changes
+-[ ] Persist changes
+-[ ] Show change count & stats
+-[ ] Review: show proposed changes only
+-[ ] Export (console.log the JSON)
+-[ ] Export (API call to PR-maker)
+
+----
+
 # SolidStart
 
 Everything you need to build a Solid project, powered by [`solid-start`](https://start.solidjs.com);
