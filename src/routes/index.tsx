@@ -9,6 +9,7 @@ import SearchFilter from "../components/SearchFilter.tsx";
 import { randomInitialSearchValue } from "../randomInitialSearchValue.ts";
 import { EditableNode, isEditableNode } from "../EditableNode.ts";
 import PullRequestDetails from "../components/PullRequestDetails.tsx";
+import { reconstructTreeFromProposedChanges } from "../utils/reconstructTree.ts"; // Import the utility
 
 const kProposedChanges = 'io.soracom.translation-editor.proposedChanges';
 
@@ -164,6 +165,36 @@ export default function Home() {
     }
   };
 
+  // New handler function for PR creation
+  const handleCreatePr = (title: string, description: string) => {
+    console.log("Attempting to create PR...");
+    console.log("Title:", title);
+    console.log("Description:", description);
+
+    const currentProposed = proposedChanges();
+    if (Object.keys(currentProposed).length === 0) {
+      console.warn("No proposed changes to submit.");
+      alert("There are no proposed changes to submit.");
+      return;
+    }
+
+    try {
+      const reconstructedTree = reconstructTreeFromProposedChanges(
+        currentProposed
+      );
+      console.log("Reconstructed Tree for Submission:", reconstructedTree);
+      alert(
+        "FIXME: PR creation not fully implemented. Check console for reconstructed data."
+      ); // Placeholder alert
+      // TODO: Replace alert with actual API call
+    } catch (error) {
+      console.error("Error reconstructing tree:", error);
+      alert(
+        "An error occurred while preparing the changes. Check the console."
+      );
+    }
+  };
+
   return (
     <main class="container mx-auto px-4 py-8">
       {/* Wrap content in Show based on loading state */}
@@ -181,11 +212,13 @@ export default function Home() {
         </Show>
         <Show when={appMode() === 'finalize'}>
           {/* Pull Request Details Form (Finalize Mode Only) */}
-          <PullRequestDetails onCancel={() => {
+          <PullRequestDetails
+            onCancel={() => {
               setAppMode('edit');
               // Reset filter to show all entries
               handleCriteriaChange({ mode: 'all' });
             }}
+            onSubmit={handleCreatePr} // Pass the handler
           />
         </Show>
 

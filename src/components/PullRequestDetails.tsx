@@ -2,11 +2,15 @@ import { Component, createSignal } from "solid-js";
 
 interface PullRequestDetailsProps {
   onCancel: () => void;
+  onSubmit: (title: string, description: string) => void;
 }
 
 const PullRequestDetails: Component<PullRequestDetailsProps> = (props) => {
   // Signal to track the PR title input
   const [prTitle, setPrTitle] = createSignal("");
+
+  // Signal to track the PR description input
+  const [prDescription, setPrDescription] = createSignal("");
 
   // Retro styles based on TranslationEditor
   const tableStyle = {
@@ -108,6 +112,8 @@ const PullRequestDetails: Component<PullRequestDetailsProps> = (props) => {
               rows="5" // Increased rows slightly
               style={inputStyle}
               placeholder="Enter PR description (optional)..."
+              value={prDescription()} // Bind value
+              onInput={(e) => setPrDescription(e.currentTarget.value)} // Update signal
             ></textarea>
           </td>
         </tr>
@@ -127,7 +133,7 @@ const PullRequestDetails: Component<PullRequestDetailsProps> = (props) => {
               type="button"
               disabled={isCreateDisabled()} // Disable based on title signal
               style={isCreateDisabled() ? disabledButtonStyle : buttonStyle} // Dynamic style
-              onClick={() => alert('FIXME! NOT IMPLEMENTED: Create PR')} // Add alert on click
+              onClick={() => props.onSubmit(prTitle(), prDescription())} // Call onSubmit
             >
               Create PR {isCreateDisabled() ? '(Needs Title)' : ''}
             </button>
