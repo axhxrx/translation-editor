@@ -8,6 +8,7 @@ import { FlattenedTree, FlattenedTreeEntry } from "../FlattenedTree.ts";
 import SearchFilter from "../components/SearchFilter.tsx";
 import { randomInitialSearchValue } from "../randomInitialSearchValue.ts";
 import { EditableNode, isEditableNode } from "../EditableNode.ts";
+import PullRequestDetails from "../components/PullRequestDetails.tsx";
 
 const kProposedChanges = 'io.soracom.translation-editor.proposedChanges';
 
@@ -26,6 +27,11 @@ export default function Home() {
    A signal to track loading state, which is used to prevent rendering before we've loaded the proposed changes from localStorage.
    */
   const [loading, setLoading] = createSignal(true);
+
+  /**
+   * State to track the current application mode: 'edit' or 'finalize'.
+   */
+  const [appMode, setAppMode] = createSignal<'edit' | 'finalize'>('edit');
 
   /**
    This effect is the main "app loading" logic, which prevents rendering before we've initialized everything we need (namely, proposed changes from localstorage)
@@ -159,15 +165,54 @@ export default function Home() {
   };
 
   return (
-    <main>
+    <main class="container mx-auto px-4 py-8">
+      {/* Wrap content in Show based on loading state */}
       <Show when={!loading()} fallback={<div>Loading editor state...</div>}>
-        <StatusBar filteredTree={filteredTree} proposedChanges={proposedChanges} />
-        <SearchFilter
-          initialValue={randomInitialSearchValue}
-          onCriteriaChange={handleCriteriaChange}
-          proposedKeyPaths={proposedPathsSignal} // Pass the derived signal
+        <h1 class="text-2xl font-bold mb-4">SORACOM Translation Editor</h1>
+
+        {/* Mode-dependent UI */}
+        <Show when={appMode() === 'edit'}>
+          {/* Search/Filter Component (Edit Mode Only) */}
+          <SearchFilter
+            initialValue={randomInitialSearchValue} // Use the initial value
+            onCriteriaChange={handleCriteriaChange}
+            proposedKeyPaths={proposedPathsSignal} // Pass the signal accessor, not the invoked value
+          />
+        </Show>
+        <Show when={appMode() === 'finalize'}>
+          {/* Pull Request Details Form (Finalize Mode Only) */}
+          <PullRequestDetails onCancel={() => {
+              setAppMode('edit');
+              // Reset filter to show all entries
+              handleCriteriaChange({ mode: 'all' });
+            }}
+          />
+        </Show>
+
+        {/* Status Bar (Always Visible) */}
+        <StatusBar
+          filteredTree={filteredTree} // Pass the signal accessor, not the invoked value
+          proposedChanges={proposedChanges} // Pass the signal accessor, not the invoked value
         />
 
+        {/* Button to switch to Finalize Mode */}
+        <Show when={appMode() === 'edit' && Object.keys(proposedChanges()).length > 0}>
+          <div class="mt-4 text-right"> {/* Align button to the right */}
+            <button
+              type="button"
+              onClick={() => {
+                setAppMode('finalize');
+                // Update filter to show only proposed changes
+                handleCriteriaChange({ mode: 'keyPaths', paths: proposedPathsSignal() });
+              }}
+              class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+            >
+              Finalize {Object.keys(proposedChanges()).length} Change(s)...
+            </button>
+          </div>
+        </Show>
+
+        {/* Translation Editor (Always Visible, content filtered by filteredTree) */}
         <For each={filteredTree().entries}>
           {(entry) => <TranslationEditor entry={entry} onProposedChange={handleProposedChange} initialProposedChanges={proposedChanges()} />}
         </For>
