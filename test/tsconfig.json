@@ -11,15 +11,14 @@
     "strict": true,
     "noEmit": true,
     "allowImportingTsExtensions": true,
-    "types": ["vinxi/types/client"],
+    "types": ["deno"],
     "isolatedModules": true,
     "paths": {
       "~/*": ["./src/*"]
     },
     "lib": [
-      "esnext",
-      "dom",
-      "dom.iterable"
+      "deno.ns",
+
     ]
   }
 }

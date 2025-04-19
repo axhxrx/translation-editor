@@ -1,34 +1,62 @@
-import { createSignal, createEffect, onCleanup } from "solid-js";
+import { createSignal, createEffect, onCleanup, Accessor } from "solid-js";
+import { FilterCriteria } from "../FilterCriteria.ts";
 
 interface SearchFilterProps {
-  onSearch: (query: string) => void;
+  onCriteriaChange: (criteria: FilterCriteria) => void;
   initialValue?: string;
   placeholder?: string;
   debounceTime?: number;
+  proposedKeyPaths?: Accessor<string[][]>;
 }
 
 export default function SearchFilter(props: SearchFilterProps) {
   const [searchQuery, setSearchQuery] = createSignal(props.initialValue || "");
-  const [debouncedQuery, setDebouncedQuery] = createSignal("");
+  const [debouncedQuery, setDebouncedQuery] = createSignal(props.initialValue || "");
+  const [includeProposedPaths, setIncludeProposedPaths] = createSignal(false);
   const debounceTime = props.debounceTime || 300;
-  
-  // Handle input changes
+
+  const emitCriteria = () => {
+    const query = debouncedQuery();
+    const include = includeProposedPaths();
+    const paths = props.proposedKeyPaths ? props.proposedKeyPaths() : [];
+    const hasPaths = paths && paths.length > 0;
+
+    let criteria: FilterCriteria;
+
+    if (query && include && hasPaths) {
+      criteria = { mode: 'combined', query: query, keyPaths: paths };
+    } else if (query) {
+      criteria = { mode: 'text', query: query };
+    } else if (include && hasPaths) {
+      criteria = { mode: 'keyPaths', paths: paths };
+    } else {
+      criteria = { mode: 'all' };
+    }
+
+    props.onCriteriaChange(criteria);
+  }
+
   const handleInputChange = (e: InputEvent) => {
     const target = e.target as HTMLInputElement;
     setSearchQuery(target.value);
   };
-  
-  // Debounce search query
+
   createEffect(() => {
     const query = searchQuery();
     const timeout = setTimeout(() => {
       setDebouncedQuery(query);
-      props.onSearch(query);
+      emitCriteria();
     }, debounceTime);
     
     onCleanup(() => clearTimeout(timeout));
   });
-  
+
+  const handleCheckboxChange = (e: Event) => {
+    const target = e.target as HTMLInputElement;
+    setIncludeProposedPaths(target.checked);
+    emitCriteria();
+  };
+
   return (
     <div class="search-filter">
       <div class="search-input-wrapper">
@@ -41,10 +69,13 @@ export default function SearchFilter(props: SearchFilterProps) {
         />
         {searchQuery() && (
           <button 
+            type="button" 
             class="clear-button" 
             onClick={() => {
               setSearchQuery("");
-              props.onSearch("");
+              setIncludeProposedPaths(false);
+              setDebouncedQuery("");
+              props.onCriteriaChange({ mode: 'all' });
             }}
             aria-label="Clear search"
           >
@@ -53,9 +84,16 @@ export default function SearchFilter(props: SearchFilterProps) {
         )}
       </div>
       
-      {/* Future checkbox options will go here */}
-      <div class="filter-options">
-        {/* Checkbox filters will be added here */}
+      <div class="filter-options" style={{"margin-top": "10px"}}>
+        <label style={{"display": "flex", "align-items": "center"}}>
+          <input 
+            type="checkbox" 
+            id="includeProposed" 
+            checked={includeProposedPaths()} 
+            onChange={handleCheckboxChange} 
+          />
+          Also show proposed changes
+        </label>
       </div>
     </div>
   );

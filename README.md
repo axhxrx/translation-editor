@@ -6,6 +6,7 @@
   -[ ] group translations by file
   -[x] debounce search
 -[x] Propose changes
+-[ ] Way to see proposed change count and hint about how many proposed changes are not visible due to current search
 -[ ] Persist changes
 -[ ] Show change count & stats
 -[ ] Review: show proposed changes only

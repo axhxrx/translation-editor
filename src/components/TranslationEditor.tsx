@@ -1,9 +1,9 @@
 import { Component, createSignal, Match, Show, Switch, createEffect } from "solid-js";
-import { EditableNode } from "~/EditableNode";
+import { EditableNode } from "../EditableNode.ts";
 
 interface TranslationEditorProps {
   entry: {
-    keyPath: string[];
+    path: string[];
     value: {
       en?: string;
       ja?: string;
@@ -12,7 +12,7 @@ interface TranslationEditorProps {
     };
   };
   initialProposedChanges: Record<string, EditableNode>;
-  onProposedChange: (keyPath: string[], node: EditableNode) => void;
+  onProposedChange: (path: string[], node: EditableNode) => void;
 }
 
 const TranslationEditor: Component<TranslationEditorProps> = (props) => {
@@ -20,7 +20,7 @@ const TranslationEditor: Component<TranslationEditorProps> = (props) => {
   /**
    This component displays an item that is a combination the current value in the filtered tree, and any proposed changes (which are app-local state, and don't come from the filtered tree). This prop just tracks the *initial* one which is passed in by the parent component; this is only to set the initial value of 
    */
-  const initialProposedChangeValue = props.initialProposedChanges[JSON.stringify(props.entry.keyPath)];
+  const initialProposedChangeValue = props.initialProposedChanges[JSON.stringify(props.entry.path)];
 
   /**
    After the initial render, this tracks the proposed changes for this entry.
@@ -59,6 +59,7 @@ const TranslationEditor: Component<TranslationEditorProps> = (props) => {
       en: undefined,
       ja: undefined,
     });
+    emitProposedChange();
   };
 
   /**
@@ -76,7 +77,7 @@ const TranslationEditor: Component<TranslationEditorProps> = (props) => {
    */
   const emitProposedChange = () => {
     console.log("EMIT PROPOSED CHANGE", proposedChange)
-    props.onProposedChange(props.entry.keyPath, {
+    props.onProposedChange(props.entry.path, {
       en: proposedChange().en,
       ja: proposedChange().ja,
     });
@@ -108,7 +109,7 @@ const TranslationEditor: Component<TranslationEditorProps> = (props) => {
               "font-size": "x-small",
             }}
           >
-            {props.entry.keyPath[0]}
+            {props.entry.path[0]}
           </th>
         </tr>
       </thead>
@@ -130,7 +131,7 @@ const TranslationEditor: Component<TranslationEditorProps> = (props) => {
                 "justify-content": "space-between",
               }}
             >
-              {props.entry.keyPath.slice(1).join(" ▹ ")}
+              {props.entry.path.slice(1).join(" ▹ ")}
               <Switch>
                 <Match
                   when={hasProposedChange()}
