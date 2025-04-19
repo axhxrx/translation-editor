@@ -1,10 +1,13 @@
-import { Component } from "solid-js";
+import { Component, createSignal } from "solid-js";
 
 interface PullRequestDetailsProps {
   onCancel: () => void;
 }
 
 const PullRequestDetails: Component<PullRequestDetailsProps> = (props) => {
+  // Signal to track the PR title input
+  const [prTitle, setPrTitle] = createSignal("");
+
   // Retro styles based on TranslationEditor
   const tableStyle = {
     "border": "3px outset rgb(192, 192, 192)",
@@ -67,6 +70,9 @@ const PullRequestDetails: Component<PullRequestDetailsProps> = (props) => {
     "text-align": "right"
   } as const;
 
+  // Determine if the button should be disabled
+  const isCreateDisabled = () => !prTitle().trim();
+
   return (
     <table style={tableStyle}>
       <thead>
@@ -87,6 +93,8 @@ const PullRequestDetails: Component<PullRequestDetailsProps> = (props) => {
               id="pr-title"
               style={inputStyle}
               placeholder="Enter PR title..."
+              value={prTitle()} // Bind value to signal
+              onInput={(e) => setPrTitle(e.currentTarget.value)} // Update signal on input
             />
           </td>
         </tr>
@@ -117,10 +125,11 @@ const PullRequestDetails: Component<PullRequestDetailsProps> = (props) => {
             </button>
             <button
               type="button"
-              disabled // Disabled for now
-              style={disabledButtonStyle}
+              disabled={isCreateDisabled()} // Disable based on title signal
+              style={isCreateDisabled() ? disabledButtonStyle : buttonStyle} // Dynamic style
+              onClick={() => alert('FIXME! NOT IMPLEMENTED: Create PR')} // Add alert on click
             >
-              Create PR (Not implemented)
+              Create PR {isCreateDisabled() ? '(Needs Title)' : ''}
             </button>
           </td>
         </tr>
