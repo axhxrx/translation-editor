@@ -1,54 +1,67 @@
-import { createEffect, createSignal, For, createMemo } from "solid-js";
-import { Title } from "@solidjs/meta";
-import TranslationEditor from "~/components/TranslationEditor";
-import { StatusBar } from "~/components/StatusBar";
-import { FilterCriteria } from "~/FilterCriteria.ts";
+import { createEffect, createSignal, For, createMemo, Show } from "solid-js";
+import TranslationEditor from "../components/TranslationEditor.tsx";
+import { StatusBar } from "../components/StatusBar.tsx";
+import { FilterCriteria } from "../FilterCriteria.ts";
 
-import data from "../data.json";
-import { FlattenedTree, FlattenedTreeEntry } from "~/FlattenedTree";
-import SearchFilter from "~/components/SearchFilter";
-import { randomInitialSearchValue } from "~/randomInitialSearchValue";
-import { EditableNode, isEditableNode } from "~/EditableNode";
+import data from "../data.json" with { type: "json" };
+import { FlattenedTree, FlattenedTreeEntry } from "../FlattenedTree.ts";
+import SearchFilter from "../components/SearchFilter.tsx";
+import { randomInitialSearchValue } from "../randomInitialSearchValue.ts";
+import { EditableNode, isEditableNode } from "../EditableNode.ts";
 
 const kProposedChanges = 'io.soracom.translation-editor.proposedChanges';
 
 export default function Home() {
   /**
-   The FlattendTree instance lives as long as the app. But we can use it to filter entries based on the search query.
+   The FlattendTree instance lives as long as the app. It has all the translations that are built into the app. But we can use it to filter entries based on the search query; filter() returns a new FlattenedTree instance, so we need to keep a reference to this one around for the life of the app.
    */
   const flattenedTree = new FlattenedTree(data, isEditableNode);
 
-  // Extract top-level keys for filter options
-  const topLevelKeys = Object.keys(data);
-
-  // Initialize signal as empty first
+  /**
+   The proposed changes are persisted to localStorage, and we load them on app startup. So initialize the signal to an empty set of changes. We'll update it after loading.
+   */
   const [proposedChanges, setProposedChanges] = createSignal<Record<string, EditableNode>>({});
 
-  // Load from localStorage and persist back ONLY on the client
+  /**
+   A signal to track loading state, which is used to prevent rendering before we've loaded the proposed changes from localStorage.
+   */
+  const [loading, setLoading] = createSignal(true);
+
+  /**
+   This effect is the main "app loading" logic, which prevents rendering before we've initialized everything we need (namely, proposed changes from localstorage)
+   */
   createEffect(() => {
+    setLoading(true);
     // Load initial state from localStorage on mount (client-side)
     const initialProposedChanges = localStorage.getItem(kProposedChanges) || "{}";
     try {
       const parsedInitialProposedChanges = JSON.parse(initialProposedChanges);
-      console.log('INITIAL PROPOSED CHANGES (loaded client-side)', parsedInitialProposedChanges);
       setProposedChanges(parsedInitialProposedChanges);
+      console.log('INITIAL PROPOSED CHANGES (loaded client-side)', parsedInitialProposedChanges);
     } catch (e) {
-      console.error("Failed to parse proposed changes from localStorage", e);
-      // Optionally clear invalid data
-      // localStorage.removeItem(kProposedChanges);
+      console.error("Failed to parse proposed changes from localStorage! Nuking bogus data, therefore.", e);
+      localStorage.removeItem(kProposedChanges);
+    } finally {
+      setLoading(false);
     }
 
-    // Persists the proposed changes to local storage, whenever they are updated.
-    // This needs to be nested or have a dependency on proposedChanges()
-    // to re-run when changes occur.
+    /**
+     Persists the proposed changes to local storage, whenever they are updated. This needs to be nested or have a dependency on proposedChanges() to re-run when changes occur.
+     */
     createEffect(() => {
+      // Prevent saving during initial load if proposedChanges hasn't been set yet
+      if (loading()) {
+        return;
+      }
       const jsonRep = JSON.stringify(proposedChanges());
-      console.log('PROPOSED CHANGES (saving client-side)', jsonRep);
       localStorage.setItem(kProposedChanges, jsonRep);
+      console.log('PROPOSED CHANGES (saved to localStorage)', jsonRep);
     });
   });
 
-  // Derived signal for proposed paths (string[][])
+  /**
+   Derived signal for proposed paths (string[][])
+   */
   const proposedPathsSignal = createMemo(() => {
     const proposed = proposedChanges();
     const pathsJson = Object.keys(proposed);
@@ -60,28 +73,18 @@ export default function Home() {
     }
   });
 
-  // Initialize filteredTree with the initial text filter state
+  /**
+   Initialize filteredTree with the initial text filter state
+   */
   const [filteredTree, setFilteredTree] = createSignal<FlattenedTree<EditableNode>>(
     flattenedTree.filter({ mode: 'text', query: randomInitialSearchValue }) // Use the master tree to filter initially
   );
 
   /**
-   The current search query.
-   */
-  const [searchQuery, setSearchQuery] = createSignal(randomInitialSearchValue);
-  
-  /**
    Handler for search query changes propagated by the SearchFilter component.
    */
   const handleCriteriaChange = (criteria: FilterCriteria) => {
     console.log("Handling Criteria Change:", criteria);
-
-    // Update search query display
-    if (criteria.mode === 'text' || criteria.mode === 'combined') {
-      setSearchQuery(criteria.query);
-    } else if (criteria.mode === 'all') {
-      setSearchQuery("");
-    }
 
     let finalFilteredTree: FlattenedTree<EditableNode>;
 
@@ -130,7 +133,6 @@ export default function Home() {
     }
 
     setFilteredTree(finalFilteredTree); // Update the signal with the new tree instance
-
   };
 
   /**
@@ -158,16 +160,18 @@ export default function Home() {
 
   return (
     <main>
-      <StatusBar filteredTree={filteredTree} proposedChanges={proposedChanges} />
-      <SearchFilter
-        initialValue={randomInitialSearchValue}
-        onCriteriaChange={handleCriteriaChange}
-        proposedKeyPaths={proposedPathsSignal} // Pass the derived signal
-      />
+      <Show when={!loading()} fallback={<div>Loading editor state...</div>}>
+        <StatusBar filteredTree={filteredTree} proposedChanges={proposedChanges} />
+        <SearchFilter
+          initialValue={randomInitialSearchValue}
+          onCriteriaChange={handleCriteriaChange}
+          proposedKeyPaths={proposedPathsSignal} // Pass the derived signal
+        />
 
         <For each={filteredTree().entries}>
           {(entry) => <TranslationEditor entry={entry} onProposedChange={handleProposedChange} initialProposedChanges={proposedChanges()} />}
         </For>
+      </Show>
     </main>
   );
 }
