@@ -4,6 +4,8 @@ import { StatusBar } from "../components/StatusBar.tsx";
 import { FilterCriteria } from "../FilterCriteria.ts";
 
 import data from "../data.json" with { type: "json" };
+import revision from "../revision.json" with { type: "json" };
+
 import { FlattenedTree, FlattenedTreeEntry } from "../FlattenedTree.ts";
 import SearchFilter from "../components/SearchFilter.tsx";
 import { randomInitialSearchValue } from "../randomInitialSearchValue.ts";
@@ -194,9 +196,9 @@ export default function Home() {
 
     // Construct the final payload
     const payload = {
-      githubOrg: "soracom", // Hardcoded for now
-      repoName: "user-console-monorepo", // Hardcoded for now
-      baseBranch: "main", // Hardcoded for now
+      githubOrg: revision.githubOrg,
+      repoName: revision.repoName,
+      baseBranch: revision.baseBranch,
       prTitle: title,
       prBody: description,
       proposedChanges: reconstructedTree, // Use the reconstructed tree directly
