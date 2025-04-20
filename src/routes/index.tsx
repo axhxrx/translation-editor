@@ -166,7 +166,7 @@ export default function Home() {
   };
 
   // New handler function for PR creation
-  const handleCreatePr = (title: string, description: string) => {
+  const handleCreatePr = async (title: string, description: string) => {
     console.log("Attempting to create PR...");
     console.log("Title:", title);
     console.log("Description:", description);
@@ -178,19 +178,66 @@ export default function Home() {
       return;
     }
 
+    let reconstructedTree;
     try {
-      const reconstructedTree = reconstructTreeFromProposedChanges(
+      reconstructedTree = reconstructTreeFromProposedChanges(
         currentProposed
       );
       console.log("Reconstructed Tree for Submission:", reconstructedTree);
-      alert(
-        "FIXME: PR creation not fully implemented. Check console for reconstructed data."
-      ); // Placeholder alert
-      // TODO: Replace alert with actual API call
     } catch (error) {
       console.error("Error reconstructing tree:", error);
       alert(
-        "An error occurred while preparing the changes. Check the console."
+        `An error occurred while preparing the changes: ${error instanceof Error ? error.message : String(error)}`
+      );
+      return; // Stop execution if tree reconstruction fails
+    }
+
+    // Construct the final payload
+    const payload = {
+      githubOrg: "soracom", // Hardcoded for now
+      repoName: "user-console-monorepo", // Hardcoded for now
+      baseBranch: "main", // Hardcoded for now
+      prTitle: title,
+      prBody: description,
+      proposedChanges: reconstructedTree, // Use the reconstructed tree directly
+    };
+
+    const apiUrl = "http://localhost:8000/create-pr"; // Use HTTP for localhost typically
+
+    try {
+      console.log("Sending POST request to:", apiUrl);
+      console.log("Payload:", JSON.stringify(payload, null, 2)); // Log the payload being sent
+
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        const responseData = await response.json(); // Or response.text() if it's not JSON
+        console.log("API Success Response:", responseData);
+        alert("SUCCESS: PR creation request sent successfully!");
+        // Optionally clear proposed changes or redirect here
+      } else {
+        // Handle HTTP errors (e.g., 4xx, 5xx)
+        let errorDetails = `Server responded with status: ${response.status}`;
+        try {
+          const errorData = await response.text(); // Try to get more details from body
+          errorDetails += ` - ${errorData}`;
+        } catch (_e) {
+          // Ignore if reading error body fails
+        }
+        console.error("API Error Response:", errorDetails);
+        alert(`Error creating PR: ${errorDetails}`);
+      }
+    } catch (error) {
+      // Handle network errors or other fetch issues
+      console.error("Network or fetch error:", error);
+      alert(
+        `Failed to send request to API: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   };
