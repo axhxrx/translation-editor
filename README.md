@@ -24,6 +24,13 @@ So, every revision of as monorepo containing the main app(s) will have a corresp
 
 3. Replace the `src/revision.json` file in the root of the translation-editor with the appropriate revision information for your app — e.g. `{ "branch": "main", "commit": "1234567890" }`
 
+## Build
+
+```bash
+SERVER_PRESET="static" deno task build
+```
+Then see `.output/public`.
+
 ## TODO
 
 -[x] Display all translations
