@@ -26,4 +26,7 @@ gitignore
 # System Files
 .DS_Store
 Thumbs.db
+
+# Overrides that get created at build time, and should supersede the default versions of these files
 src/data.json
+src/revision.json
