@@ -1,4 +1,4 @@
-import { FilterCriteria } from "./FilterCriteria.ts";
+import { FilterCriteria } from './FilterCriteria.ts';
 
 /**
  * Represents a key path, which can be either an array of strings (canonical form)
@@ -10,28 +10,34 @@ export type KeyPath = string | string[];
  * Represents a single entry in the flattened tree structure.
  * It holds the key path, the associated value, and potentially other metadata.
  */
-export class FlattenedTreeEntry<T> {
-  constructor(public path: string[], public value: T) {}
+export class FlattenedTreeEntry<T>
+{
+  constructor(public path: string[], public value: T)
+  {}
 
   /**
    * Returns the key path as a JSON-stringified string.
    * Useful for using the path as a key in objects or Maps.
    */
-  get keyPathString(): string {
+  get keyPathString(): string
+  {
     return JSON.stringify(this.path);
   }
 }
 
-export class FlattenedTree<T> {
+export class FlattenedTree<T>
+{
   private _entries: FlattenedTreeEntry<T>[] = [];
   private _keyMap: Map<string, number> = new Map();
   private originalEntries: FlattenedTreeEntry<T>[] = [];
 
-  get entries(): readonly FlattenedTreeEntry<T>[] {
+  get entries(): readonly FlattenedTreeEntry<T>[]
+  {
     return this._entries;
   }
 
-  get keyMap(): Map<string, number> {
+  get keyMap(): Map<string, number>
+  {
     return this._keyMap;
   }
 
@@ -43,19 +49,28 @@ export class FlattenedTree<T> {
    * @returns The normalized key path as string[].
    * @throws If the string input is not valid JSON or not an array of strings.
    */
-  public static normalizeKeyPathToArray(keyPath: KeyPath): string[] {
-    if (Array.isArray(keyPath)) {
+  public static normalizeKeyPathToArray(keyPath: KeyPath): string[]
+  {
+    if (Array.isArray(keyPath))
+    {
       return keyPath;
     }
-    if (typeof keyPath === 'string') {
-      try {
+    if (typeof keyPath === 'string')
+    {
+      try
+      {
         const parsed = JSON.parse(keyPath);
-        if (Array.isArray(parsed) && parsed.every(item => typeof item === 'string')) {
+        if (Array.isArray(parsed) && parsed.every(item => typeof item === 'string'))
+        {
           return parsed as string[];
         }
-        throw new Error("Parsed JSON is not an array of strings.");
-      } catch (error) {
-        throw new Error(`Failed to parse keyPath string '${keyPath}': ${error instanceof Error ? error.message : String(error)}`);
+        throw new Error('Parsed JSON is not an array of strings.');
+      }
+      catch (error)
+      {
+        throw new Error(
+          `Failed to parse keyPath string '${keyPath}': ${error instanceof Error ? error.message : String(error)}`,
+        );
       }
     }
     // Should be unreachable given the type definition, but belts and suspenders:
@@ -69,13 +84,16 @@ export class FlattenedTree<T> {
    * @param keyPath The key path to normalize.
    * @returns The normalized key path as a JSON string.
    */
-  public static normalizeKeyPathToString(keyPath: KeyPath): string {
-    if (typeof keyPath === 'string') {
+  public static normalizeKeyPathToString(keyPath: KeyPath): string
+  {
+    if (typeof keyPath === 'string')
+    {
       // Assume string is already the correct JSON representation
       // We could add validation here if needed, but let's keep it simple for now.
       return keyPath;
     }
-    if (Array.isArray(keyPath)) {
+    if (Array.isArray(keyPath))
+    {
       return JSON.stringify(keyPath);
     }
     // Should be unreachable
@@ -85,7 +103,8 @@ export class FlattenedTree<T> {
   /**
    Add entry to the flattened tree. This method always succeeds..
    */
-  addEntry(entry: FlattenedTreeEntry<T>) {
+  addEntry(entry: FlattenedTreeEntry<T>)
+  {
     const key = entry.keyPathString;
     this._entries.push(entry);
     this._keyMap.set(key, this._entries.length - 1);
@@ -94,10 +113,12 @@ export class FlattenedTree<T> {
   /**
    Remove entry from the flattened tree. Returns true if the entry was removed, false otherwise.
    */
-  removeEntry(keyPath: KeyPath) {
+  removeEntry(keyPath: KeyPath)
+  {
     const key = FlattenedTree.normalizeKeyPathToString(keyPath);
     const index = this._keyMap.get(key);
-    if (index !== undefined) {
+    if (index !== undefined)
+    {
       this._entries.splice(index, 1);
       this._keyMap.delete(key);
       return true;
@@ -108,10 +129,12 @@ export class FlattenedTree<T> {
   /**
    Update entry in the flattened tree. Returns true if the entry was updated, false otherwise.
    */
-  updateEntry(keyPath: KeyPath, value: T) {
+  updateEntry(keyPath: KeyPath, value: T)
+  {
     const key = FlattenedTree.normalizeKeyPathToString(keyPath);
     const index = this._keyMap.get(key);
-    if (index !== undefined) {
+    if (index !== undefined)
+    {
       this._entries[index].value = value;
       return true;
     }
@@ -120,7 +143,7 @@ export class FlattenedTree<T> {
 
   metrics: {
     constructionTime: number;
-  }
+  };
 
   /**
    * Constructor for FlattenedTree.
@@ -129,24 +152,32 @@ export class FlattenedTree<T> {
    * @param valueDetectorFn Predicate function to determine if a node is a leaf (optional if initialEntries provided).
    * @param initialEntries Optional array of entries to initialize the tree directly.
    */
-  constructor(data?: Record<string, any>, valueDetectorFn?: (value: any) => T | undefined, initialEntries?: FlattenedTreeEntry<T>[]) {
+  constructor(data?: Record<string, any>, valueDetectorFn?: (value: any) => T | undefined,
+    initialEntries?: FlattenedTreeEntry<T>[])
+  {
     const start = performance.now();
 
-    if (initialEntries) {
+    if (initialEntries)
+    {
       // Initialize directly from entries
       this.setEntries(initialEntries); // Use setEntries to build map
       this.originalEntries = initialEntries; // Set originalEntries for consistency?
-    } else if (data !== undefined && valueDetectorFn !== undefined) {
+    }
+    else if (data !== undefined && valueDetectorFn !== undefined)
+    {
       // Flatten the data
       this.flattenTree(data, [], valueDetectorFn);
       this.originalEntries = [...this._entries]; // Store a copy of the initial entries
-    } else if (initialEntries === undefined) {
+    }
+    else if (initialEntries === undefined)
+    {
       // Allow creating an empty tree explicitly if needed (e.g., for manual building)
       // Do nothing, _entries and _keyMap are already initialized as empty.
-      this.originalEntries = []; 
+      this.originalEntries = [];
     }
-     else {
-        throw new Error("FlattenedTree constructor requires either data and valueDetectorFn, or initialEntries.");
+    else
+    {
+      throw new Error('FlattenedTree constructor requires either data and valueDetectorFn, or initialEntries.');
     }
 
     const end = performance.now();
@@ -156,9 +187,11 @@ export class FlattenedTree<T> {
     console.log(`FlattenedTree constructor: ${end - start}ms`);
   }
 
-  private buildKeyMap() {
+  private buildKeyMap()
+  {
     this._keyMap.clear();
-    this._entries.forEach((entry, index) => {
+    this._entries.forEach((entry, index) =>
+    {
       this._keyMap.set(entry.keyPathString, index);
     });
   }
@@ -166,18 +199,24 @@ export class FlattenedTree<T> {
   private flattenTree(
     tree: Record<string, any>,
     keyPath: string[] = [],
-    valueDetectorFn?: (value: any) => T | undefined
-  ) {
-    for (const [key, value] of Object.entries(tree)) {
+    valueDetectorFn?: (value: any) => T | undefined,
+  )
+  {
+    for (const [key, value] of Object.entries(tree))
+    {
       const newKeyPath = [...keyPath, key];
       const detectedValue = valueDetectorFn ? valueDetectorFn(value) : undefined;
-      if (detectedValue !== undefined) {
+      if (detectedValue !== undefined)
+      {
         this.addEntry(new FlattenedTreeEntry(newKeyPath, detectedValue));
         continue;
       }
-      if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+      if (typeof value === 'object' && value !== null && !Array.isArray(value))
+      {
         this.flattenTree(value, newKeyPath, valueDetectorFn);
-      } else {
+      }
+      else
+      {
         this.addEntry(new FlattenedTreeEntry(newKeyPath, value));
       }
     }
@@ -188,14 +227,18 @@ export class FlattenedTree<T> {
    * @param paths An array of key paths (string[][]) to retrieve.
    * @returns An array of FlattenedTreeEntry<T> objects corresponding to the found paths.
    */
-  public getEntriesByPaths(paths: string[][]): FlattenedTreeEntry<T>[] {
+  public getEntriesByPaths(paths: string[][]): FlattenedTreeEntry<T>[]
+  {
     const foundEntries: FlattenedTreeEntry<T>[] = [];
-    for (const path of paths) {
+    for (const path of paths)
+    {
       const keyString = JSON.stringify(path);
       const index = this._keyMap.get(keyString);
-      if (index !== undefined) {
+      if (index !== undefined)
+      {
         const entry = this.originalEntries[index];
-        if (entry) {
+        if (entry)
+        {
           foundEntries.push(entry);
         }
       }
@@ -208,10 +251,12 @@ export class FlattenedTree<T> {
    * Use with caution, intended for scenarios like creating a tree from combined filter results.
    * @param entries The array of FlattenedTreeEntry<T> to set.
    */
-  public setEntries(entries: FlattenedTreeEntry<T>[]) {
+  public setEntries(entries: FlattenedTreeEntry<T>[])
+  {
     this._entries = [...entries]; // Use spread to ensure a new array reference
     this._keyMap.clear();
-    this._entries.forEach((entry, index) => {
+    this._entries.forEach((entry, index) =>
+    {
       this._keyMap.set(entry.keyPathString, index);
     });
     // Note: This does not update originalEntries. This method creates a potentially
@@ -223,11 +268,12 @@ export class FlattenedTree<T> {
    * @param criteria The filtering criteria (text query, key paths, etc.).
    * @returns A new FlattenedTree instance with the filtered entries.
    */
-  public filter(criteria: FilterCriteria): FlattenedTree<T> {
-
+  public filter(criteria: FilterCriteria): FlattenedTree<T>
+  {
     let filteredEntries: FlattenedTreeEntry<T>[];
 
-    switch (criteria.mode) {
+    switch (criteria.mode)
+    {
       case 'all':
         // Return all entries
         filteredEntries = [...this.originalEntries]; // Use original for full set
@@ -237,19 +283,26 @@ export class FlattenedTree<T> {
       case 'combined': // Treat combined as text-only for now
         {
           const lowerQuery = criteria.query.toLowerCase();
-          if (!lowerQuery) {
+          if (!lowerQuery)
+          {
             // Empty query means show all
             filteredEntries = [...this.originalEntries];
-          } else {
-            filteredEntries = this.originalEntries.filter(entry => {
+          }
+          else
+          {
+            filteredEntries = this.originalEntries.filter(entry =>
+            {
               // Check path components
               const keyPathMatch = entry.path.some(key => key.toLowerCase().includes(lowerQuery));
               if (keyPathMatch) return true;
 
               // Check value properties if it's an object
-              if (typeof entry.value === 'object' && entry.value !== null) {
-                for (const val of Object.values(entry.value)) {
-                  if (typeof val === 'string' && val.toLowerCase().includes(lowerQuery)) {
+              if (typeof entry.value === 'object' && entry.value !== null)
+              {
+                for (const val of Object.values(entry.value))
+                {
+                  if (typeof val === 'string' && val.toLowerCase().includes(lowerQuery))
+                  {
                     return true;
                   }
                 }
@@ -269,7 +322,7 @@ export class FlattenedTree<T> {
 
       default:
         // Should be unreachable if FilterCriteria is exhaustive
-        console.warn("Unhandled filter criteria mode:", criteria);
+        console.warn('Unhandled filter criteria mode:', criteria);
         filteredEntries = [...this.originalEntries]; // Return original if mode is unknown
         break;
     }

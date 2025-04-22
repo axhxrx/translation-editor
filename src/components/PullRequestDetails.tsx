@@ -1,77 +1,79 @@
-import { Component, createSignal } from "solid-js";
+import { Component, createSignal } from 'solid-js';
 
-interface PullRequestDetailsProps {
+interface PullRequestDetailsProps
+{
   onCancel: () => void;
   onSubmit: (title: string, description: string) => void;
 }
 
-const PullRequestDetails: Component<PullRequestDetailsProps> = (props) => {
+const PullRequestDetails: Component<PullRequestDetailsProps> = (props) =>
+{
   // Signal to track the PR title input
-  const [prTitle, setPrTitle] = createSignal("");
+  const [prTitle, setPrTitle] = createSignal('');
 
   // Signal to track the PR description input
-  const [prDescription, setPrDescription] = createSignal("");
+  const [prDescription, setPrDescription] = createSignal('');
 
   // Retro styles based on TranslationEditor
   const tableStyle = {
-    "border": "3px outset rgb(192, 192, 192)",
-    "border-collapse": "separate",
-    "border-spacing": "2px",
-    "background-color": "#efefef", // Light gray background
-    "font-family": "Tahoma, Arial, sans-serif",
-    "box-shadow": "2px 2px 6px #888888",
-    "width": "100%",
-    "margin-top": "1rem", // Add some space above
-    "margin-bottom": "1rem", // Add some space below
+    border: '3px outset rgb(192, 192, 192)',
+    'border-collapse': 'separate',
+    'border-spacing': '2px',
+    'background-color': '#efefef', // Light gray background
+    'font-family': 'Tahoma, Arial, sans-serif',
+    'box-shadow': '2px 2px 6px #888888',
+    width: '100%',
+    'margin-top': '1rem', // Add some space above
+    'margin-bottom': '1rem', // Add some space below
   } as const;
   const thStyle = {
-    "background-color": "#0000aa", // Dark blue header
-    "color": "white",
-    "font-weight": "bold",
-    "text-align": "center",
-    "padding": "4px",
-    "border": "2px outset #c0c0c0",
-    "font-size": "medium", // Slightly larger than TranslationEditor's header
+    'background-color': '#0000aa', // Dark blue header
+    color: 'white',
+    'font-weight': 'bold',
+    'text-align': 'center',
+    padding: '4px',
+    border: '2px outset #c0c0c0',
+    'font-size': 'medium', // Slightly larger than TranslationEditor's header
   } as const;
   const labelCellStyle = {
-    "font-weight": "bold",
-    "padding": "6px 12px",
-    "border": "2px inset #c0c0c0",
-    "background-color": "#d0d0d0", // Medium gray label cell
-    "text-align": "right",
-    "vertical-align": "top", // Align label to the top
-    "width": "150px", // Fixed width for labels
+    'font-weight': 'bold',
+    padding: '6px 12px',
+    border: '2px inset #c0c0c0',
+    'background-color': '#d0d0d0', // Medium gray label cell
+    'text-align': 'right',
+    'vertical-align': 'top', // Align label to the top
+    width: '150px', // Fixed width for labels
   } as const;
   const inputCellStyle = {
-    "padding": "6px",
-    "border": "2px inset #c0c0c0",
-    "background-color": "#ffffff", // White background for input area
+    padding: '6px',
+    border: '2px inset #c0c0c0',
+    'background-color': '#ffffff', // White background for input area
   } as const;
   const inputStyle = { // Basic retro input styling
-    "border": "1px solid #888",
-    "padding": "4px",
-    "width": "100%",
-    "background-color": "#ffffff",
-    "font-family": "Tahoma, Arial, sans-serif",
+    border: '1px solid #888',
+    padding: '4px',
+    width: '100%',
+    'background-color': '#ffffff',
+    'font-family': 'Tahoma, Arial, sans-serif',
   } as const;
   const buttonStyle = {
-    "border": "2px outset #c0c0c0",
-    "background-color": "#c0c0c0", // Standard gray button background
-    "padding": "4px 10px",
-    "font-family": "Tahoma, Arial, sans-serif",
-    "cursor": "pointer",
-    "margin-left": "8px", // Space between buttons
+    border: '2px outset #c0c0c0',
+    'background-color': '#c0c0c0', // Standard gray button background
+    padding: '4px 10px',
+    'font-family': 'Tahoma, Arial, sans-serif',
+    cursor: 'pointer',
+    'margin-left': '8px', // Space between buttons
   } as const;
   const disabledButtonStyle = {
     ...buttonStyle,
-    "color": "#888888", // Grayed out text
-    "cursor": "default",
+    color: '#888888', // Grayed out text
+    cursor: 'default',
   } as const;
 
   // Specific style for the button row cell, derived from inputCellStyle
   const buttonRowCellStyle = {
     ...inputCellStyle,
-    "text-align": "right"
+    'text-align': 'right',
   } as const;
 
   // Determine if the button should be disabled
@@ -89,14 +91,14 @@ const PullRequestDetails: Component<PullRequestDetailsProps> = (props) => {
       <tbody>
         <tr>
           <td style={labelCellStyle}>
-            <label for="pr-title">Title:</label>
+            <label for='pr-title'>Title:</label>
           </td>
           <td style={inputCellStyle}>
             <input
-              type="text"
-              id="pr-title"
+              type='text'
+              id='pr-title'
               style={inputStyle}
-              placeholder="Enter PR title..."
+              placeholder='Enter PR title...'
               value={prTitle()} // Bind value to signal
               onInput={(e) => setPrTitle(e.currentTarget.value)} // Update signal on input
             />
@@ -104,17 +106,18 @@ const PullRequestDetails: Component<PullRequestDetailsProps> = (props) => {
         </tr>
         <tr>
           <td style={labelCellStyle}>
-            <label for="pr-description">Description:</label>
+            <label for='pr-description'>Description:</label>
           </td>
           <td style={inputCellStyle}>
             <textarea
-              id="pr-description"
-              rows="5" // Increased rows slightly
+              id='pr-description'
+              rows='5' // Increased rows slightly
               style={inputStyle}
-              placeholder="Enter PR description (optional)..."
+              placeholder='Enter PR description (optional)...'
               value={prDescription()} // Bind value
               onInput={(e) => setPrDescription(e.currentTarget.value)} // Update signal
-            ></textarea>
+            >
+            </textarea>
           </td>
         </tr>
         <tr>
@@ -123,14 +126,14 @@ const PullRequestDetails: Component<PullRequestDetailsProps> = (props) => {
             style={buttonRowCellStyle} // Use the specific const style object
           >
             <button
-              type="button"
+              type='button'
               onClick={props.onCancel}
               style={buttonStyle}
             >
               Back to editing
             </button>
             <button
-              type="button"
+              type='button'
               disabled={isCreateDisabled()} // Disable based on title signal
               style={isCreateDisabled() ? disabledButtonStyle : buttonStyle} // Dynamic style
               onClick={() => props.onSubmit(prTitle(), prDescription())} // Call onSubmit
