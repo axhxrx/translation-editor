@@ -1,0 +1,55 @@
+{
+  "name": "translation-editor",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/translation-editor/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "configurations": {
+        "development": {
+          "commands": [
+            "cp -f ../../etc/apps/translation-editor/deploy.yml ./deploy.yml 2>/dev/null || true",
+            "rm -rf ../../dist/apps/translation-editor/development",
+            "mkdir -p ../../dist/apps/translation-editor/development",
+            "SERVER_PRESET=\"static\" deno task build",
+            "cp -R .output/public/* ../../dist/apps/translation-editor/development"
+          ],
+          "cwd": "apps/translation-editor",
+          "parallel": false
+        },
+        "staging": {
+          "commands": [
+            "cp -f ../../etc/apps/translation-editor/deploy.yml ./deploy.yml 2>/dev/null || true",
+            "rm -rf ../../dist/apps/translation-editor/staging",
+            "mkdir -p ../../dist/apps/translation-editor/staging",
+            "SERVER_PRESET=\"static\" deno task build",
+            "cp -R .output/public/* ../../dist/apps/translation-editor/staging"
+          ],
+          "cwd": "apps/translation-editor",
+          "parallel": false
+        },
+        "production": {
+          "commands": [
+            "cp -f ../../etc/apps/translation-editor/deploy.yml ./deploy.yml 2>/dev/null || true",
+            "rm -rf ../../dist/apps/translation-editor/production",
+            "mkdir -p ../../dist/apps/translation-editor/production",
+            "SERVER_PRESET=\"static\" deno task build",
+            "cp -R .output/public ../../dist/apps/translation-editor/production"
+          ],
+          "cwd": "apps/translation-editor",
+          "parallel": false
+        }
+      },
+      "defaultConfiguration": "development"
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "deno run dev",
+        "cwd": "apps/translation-editor"
+      }
+    }
+  },
+  "tags": []
+}

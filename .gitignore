@@ -32,3 +32,4 @@ src/data.json
 src/revision.json
 
 translation-editor-config.ts
+deploy.yml
