@@ -9,7 +9,7 @@
       "configurations": {
         "development": {
           "commands": [
-            "cp -f ../../etc/apps/translation-editor/deploy.yml ./deploy.yml 2>/dev/null || true",
+            "cp -fv ../../etc/apps/translation-editor/* ./ 2>/dev/null || true",
             "rm -rf ../../dist/apps/translation-editor/development",
             "mkdir -p ../../dist/apps/translation-editor/development",
             "SERVER_PRESET=\"static\" deno task build",
@@ -20,7 +20,7 @@
         },
         "staging": {
           "commands": [
-            "cp -f ../../etc/apps/translation-editor/deploy.yml ./deploy.yml 2>/dev/null || true",
+            "cp -fv ../../etc/apps/translation-editor/* ./ 2>/dev/null || true",
             "rm -rf ../../dist/apps/translation-editor/staging",
             "mkdir -p ../../dist/apps/translation-editor/staging",
             "SERVER_PRESET=\"static\" deno task build",
@@ -31,7 +31,7 @@
         },
         "production": {
           "commands": [
-            "cp -f ../../etc/apps/translation-editor/deploy.yml ./deploy.yml 2>/dev/null || true",
+            "cp -fv ../../etc/apps/translation-editor/* ./ 2>/dev/null || true",
             "rm -rf ../../dist/apps/translation-editor/production",
             "mkdir -p ../../dist/apps/translation-editor/production",
             "SERVER_PRESET=\"static\" deno task build",
