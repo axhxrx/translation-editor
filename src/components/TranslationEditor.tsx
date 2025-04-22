@@ -187,40 +187,50 @@ const TranslationEditor: Component<TranslationEditorProps> = (props) =>
             }}
           >
             <td>
-              <textarea
-                style={{
-                  'min-width': '100%',
-                  'min-height': '100%',
-                  'box-sizing': 'border-box',
-                  resize: 'vertical',
-                }}
-                value={proposedChange().en}
-                onInput={(e) =>
-                {
-                  const newValue = e.target.value;
-                  const currentChange = proposedChange();
-                  setProposedChange({ ...currentChange, en: newValue });
-                  emitProposedChange();
-                }}
-              />
+              <div style={{ margin: '0' }}>
+                <textarea
+                  style={{
+                    height: '5em',
+                    'min-width': '100%',
+                    'min-height': '100%',
+                    'box-sizing': 'border-box',
+                    'margin-top': '0',
+                    'margin-bottom': '0',
+                    resize: 'vertical',
+                  }}
+                  value={proposedChange().en}
+                  onInput={(e) =>
+                  {
+                    const newValue = e.target.value;
+                    const currentChange = proposedChange();
+                    setProposedChange({ ...currentChange, en: newValue });
+                    emitProposedChange();
+                  }}
+                />
+              </div>
             </td>
             <td>
-              <textarea
-                style={{
-                  'min-width': '100%',
-                  'min-height': '100%',
-                  'box-sizing': 'border-box',
-                  resize: 'vertical',
-                }}
-                value={proposedChange().ja}
-                onInput={(e) =>
-                {
-                  const newValue = e.target.value;
-                  const currentChange = proposedChange();
-                  setProposedChange({ ...currentChange, ja: newValue });
-                  emitProposedChange();
-                }}
-              />
+              <div style={{ margin: '0' }}>
+                <textarea
+                  style={{
+                    height: '5em',
+                    'min-width': '100%',
+                    'min-height': '100%',
+                    'box-sizing': 'border-box',
+                    'margin-top': '0',
+                    'margin-bottom': '0',
+                    resize: 'vertical',
+                  }}
+                  value={proposedChange().ja}
+                  onInput={(e) =>
+                  {
+                    const newValue = e.target.value;
+                    const currentChange = proposedChange();
+                    setProposedChange({ ...currentChange, ja: newValue });
+                    emitProposedChange();
+                  }}
+                />
+              </div>
             </td>
           </tr>
         </Show>
