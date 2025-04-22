@@ -31,6 +31,20 @@ const TranslationEditor: Component<TranslationEditorProps> = (props) =>
     ja: undefined,
   });
 
+  // Refs to DOM nodes used for synchronising heights
+  let trRef: HTMLTableRowElement | undefined;
+  let textareaEnRef: HTMLTextAreaElement | undefined;
+  let textareaJaRef: HTMLTextAreaElement | undefined;
+
+  // Keep track of last measured heights and resize status
+  let _lastTrHeight = 0; // prefixed to silence unused-variable lint; may be useful later
+  let lastTextareaEnHeight = 0;
+  let lastTextareaJaHeight = 0;
+  let isResizing = false;
+
+  // id for the pending setTimeout used to sync heights
+  let resizeTimeout: number | undefined;
+
   /**
    Using createEffect to set the initial value of proposedChange avoids the SolidJS issue of "Hydration Mismatch. Unable to find DOM nodes for hydration key: 0000000010000030000003220 <tr><td><textarea></textarea></td><td><textarea></textarea></td></tr>". I am still a little fuzzy on this, but it seems that modifying the DOM based on `props` can cause SolidJS to shit its pants when using `<Show>` and `<Match>`. But making sure conditional rendering is based on signals/effects that exist after the initial render, not the initial props, seems to avoid this issue. (This was my first 🫤 moment with SolidJS... admittedly could be a n00b skill issue, but it seems like there are infinite possible subtle fuckups one could inadvertently cause, where the code works most of the time and quasi-randomly fails with hydration errors only some of the time.)
    */
@@ -89,6 +103,79 @@ const TranslationEditor: Component<TranslationEditorProps> = (props) =>
       ja: proposedChange().ja,
     });
   };
+
+  // Set up ResizeObserver once the elements are mounted
+  createEffect(() =>
+  {
+    if (!hasProposedChange() || !trRef || !textareaEnRef || !textareaJaRef) return;
+
+    const observer = new ResizeObserver(() =>
+    {
+      if (!trRef || !textareaEnRef || !textareaJaRef) return;
+
+      const trH = trRef.offsetHeight;
+      const enH = textareaEnRef.offsetHeight;
+      const jaH = textareaJaRef.offsetHeight;
+
+      // Log heights for debugging
+      console.log('ResizeObserver', { trH, enH, jaH });
+
+      const scheduleSync = (dest: HTMLTextAreaElement, newHeight: number) =>
+      {
+        // Cancel any previously queued resize
+        if (resizeTimeout !== undefined)
+        {
+          clearTimeout(resizeTimeout);
+        }
+
+        isResizing = true;
+        resizeTimeout = setTimeout(() =>
+        {
+          dest.style.height = `${newHeight}px`;
+
+          // Record new heights after the style update
+          if (trRef && textareaEnRef && textareaJaRef)
+          {
+            _lastTrHeight = trRef.offsetHeight;
+            lastTextareaEnHeight = textareaEnRef.offsetHeight;
+            lastTextareaJaHeight = textareaJaRef.offsetHeight;
+          }
+          else
+          {
+            console.warn('😩 my resize sync logic no good!');
+          }
+
+          isResizing = false;
+          resizeTimeout = undefined;
+        });
+      };
+
+      if (!isResizing)
+      {
+        if (enH !== lastTextareaEnHeight && jaH === lastTextareaJaHeight)
+        {
+          // English textarea was resized; update the Japanese textarea
+          scheduleSync(textareaJaRef, enH);
+        }
+        else if (jaH !== lastTextareaJaHeight && enH === lastTextareaEnHeight)
+        {
+          // Japanese textarea was resized; update the English textarea
+          scheduleSync(textareaEnRef, jaH);
+        }
+      }
+
+      // Update last measured heights for next comparison (will be overwritten when sync happens)
+      _lastTrHeight = trH;
+      lastTextareaEnHeight = enH;
+      lastTextareaJaHeight = jaH;
+    });
+
+    observer.observe(trRef);
+    observer.observe(textareaEnRef);
+    observer.observe(textareaJaRef);
+
+    return () => observer.disconnect();
+  });
 
   return (
     <table
@@ -180,6 +267,7 @@ const TranslationEditor: Component<TranslationEditorProps> = (props) =>
           when={hasProposedChange()}
         >
           <tr
+            ref={(el) => (trRef = el as HTMLTableRowElement)}
             style={{
               padding: '4px',
               border: '2px inset #c0c0c0',
@@ -189,6 +277,7 @@ const TranslationEditor: Component<TranslationEditorProps> = (props) =>
             <td>
               <div style={{ margin: '0' }}>
                 <textarea
+                  ref={(el) => (textareaEnRef = el as HTMLTextAreaElement)}
                   style={{
                     height: '5em',
                     'min-width': '100%',
@@ -212,6 +301,7 @@ const TranslationEditor: Component<TranslationEditorProps> = (props) =>
             <td>
               <div style={{ margin: '0' }}>
                 <textarea
+                  ref={(el) => (textareaJaRef = el as HTMLTextAreaElement)}
                   style={{
                     height: '5em',
                     'min-width': '100%',
