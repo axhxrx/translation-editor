@@ -42,6 +42,35 @@ export default function Home() {
   const [appMode, setAppMode] = createSignal<'edit' | 'finalize'>('edit');
 
   /**
+   Initialize filteredTree with the initial text filter state
+   */
+  const [filteredTree, setFilteredTree] = createSignal<
+    FlattenedTree<EditableNode>
+  >(
+    flattenedTree.filter({ mode: 'text', query: randomInitialSearchValue }), // Use the master tree to filter initially
+  );
+
+  /**
+   * Calculates the total number of proposed changes.
+   */
+  const totalChanges = createMemo(() => {
+    return Object.keys(proposedChanges()).length;
+  });
+
+  /**
+   * Calculates the number of proposed changes currently visible in the filtered view.
+   */
+  const shownChanges = createMemo(() => {
+    const currentProposed = proposedChanges();
+    const currentFiltered = filteredTree();
+    if (!currentFiltered) return 0; // Handle initial state or errors
+
+    return currentFiltered.entries.filter((entry) =>
+      Object.prototype.hasOwnProperty.call(currentProposed, entry.keyPathString),
+    ).length;
+  });
+
+  /**
    This effect is the main "app loading" logic, which prevents rendering before we've initialized everything we need (namely, proposed changes from localstorage)
    */
   createEffect(() => {
@@ -93,15 +122,6 @@ export default function Home() {
       return [];
     }
   });
-
-  /**
-   Initialize filteredTree with the initial text filter state
-   */
-  const [filteredTree, setFilteredTree] = createSignal<
-    FlattenedTree<EditableNode>
-  >(
-    flattenedTree.filter({ mode: 'text', query: randomInitialSearchValue }), // Use the master tree to filter initially
-  );
 
   /**
    Handler for search query changes propagated by the SearchFilter component.
@@ -317,10 +337,7 @@ export default function Home() {
         </Show>
 
         {/* Status Bar (Always Visible) */}
-        <StatusBar
-          filteredTree={filteredTree} // Pass the signal accessor, not the invoked value
-          proposedChanges={proposedChanges} // Pass the signal accessor, not the invoked value
-        />
+        <StatusBar totalChanges={totalChanges} shownChanges={shownChanges} />
 
         {/* Button to switch to Finalize Mode */}
         <Show
