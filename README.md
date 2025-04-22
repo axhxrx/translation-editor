@@ -31,6 +31,14 @@ SERVER_PRESET="static" deno task build
 ```
 Then see `.output/public`.
 
+## Serve locally
+```bash
+deno task dev
+# this just runs the package.json script, i.e. `vinxi dev`
+```
+
+🚨 NOTE! The app is currently intended to be served from `/translation-editor/` and not `/`. I don't know how to make vinxi know this, so when you load `/` (the default URL that is printed by vinxi) you get an ugly HTTP 503 error. That's expected. Manually navigate to `/translation-editor/` and it should work.
+
 ## TODO
 
 -[x] Display all translations
