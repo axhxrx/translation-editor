@@ -44,6 +44,9 @@
       "defaultConfiguration": "development"
     },
     "serve": {
+      "dependsOn": [
+        "build"
+      ],
       "executor": "nx:run-commands",
       "options": {
         "command": "deno run dev",
