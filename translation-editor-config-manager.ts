@@ -9,6 +9,26 @@ export interface TranslationEditorConfig {
    Used as a localStorage prefix, you probably should use a reverse-domain identifier for a domain you control, e.g. `com.example.app.translation-editor`.
    */
   appIdentifier: string;
+
+  /**
+   A rudimentary extension for arbitrary authentication mechanism. 
+   */
+  authConfig?: {
+    /**
+     An optional user-supplied function to attempt to authenticate. This function must return some kind of result object that can be passed to the `isAuthenticated` function to determine if authentication was successful.
+     */
+    authenticate: () => Promise<unknown>;
+
+    /**
+     The result of your `authenticate` function will be passed to this function to determine if authentication was successful. 
+     */
+    isAuthenticated: (authenticateResult: unknown) => boolean;
+
+    /**
+     If you have supplied an authConfig, then the result of `authenticate()` will be passed to this method when `isAuthenticated()` returns false.
+     */
+    handleAuthenticationFailure: (authenticateResult: unknown) => Promise<void>;
+  };
 }
 
 import { TRANSLATION_EDITOR_CONFIG } from './translation-editor-config.template.ts';
@@ -30,7 +50,7 @@ Then edit the new translation-editor-config.ts file with your
 specific configuration values.
 `;
 
-export async function loadConfig(): Promise<TranslationEditorConfig> {
+export async function loadConfig(): Promise<Required<TranslationEditorConfig>> {
   try {
     // Dynamic import of the user's config file
     const userConfig = await import('./translation-editor-config.ts');

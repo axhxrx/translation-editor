@@ -1,4 +1,4 @@
-import { createEffect, createMemo, createSignal, For, Show } from 'solid-js';
+import { createEffect, createMemo, createResource, createSignal, For, Show } from 'solid-js';
 import { StatusBar } from '../components/StatusBar.tsx';
 import TranslationEditor from '../components/TranslationEditor.tsx';
 import { FilterCriteria } from '../FilterCriteria.ts';
@@ -25,8 +25,27 @@ const DEFAULT_QUERY = 'loading...ɓuᴉpɐoʅ...loading...ɓuᴉpɐoʅ';
 
 export default function Home()
 {
+  const [authenticationResult] = createResource(
+    config.authConfig.authenticate,
+  );
+
+  createEffect(() =>
+  {
+    const authResult = authenticationResult();
+
+    // If we have a result and it's not authenticated (i.e., not a success)
+    if (authResult && !config.authConfig.isAuthenticated(authResult))
+    {
+      // I think we have to move async operation into a separate function that's called from the effect but isn't part of the effect's reactivity tracking (per LLM advice haha)
+      (async () =>
+      {
+        await config.authConfig.handleAuthenticationFailure(authResult);
+        // FIXME: @masonmark 2025-04-23: Right now we just assume the above method has redirected somewhere else to log in. Since this app has all its data built into the app, there is not much we can do here. The data edited by this app is presumed to be public data, so this is a usability issue, not a security issue. If the handleAuthenticationFailure() method does not redirect, then we should probably show an error message, or something, but it is not a high priority at this early stage.
+      })();
+    }
+  });
   /**
-   The FlattendTree instance lives as long as the app. It has all the translations that are built into the app. But we can use it to filter entries based on the search query; filter() returns a new FlattenedTree instance, so we need to keep a reference to this one around for the life of the app.
+   The FlattenedTree instance lives as long as the app. It has all the translations that are built into the app. But we can use it to filter entries based on the search query; filter() returns a new FlattenedTree instance, so we need to keep a reference to this one around for the life of the app.
    */
   const flattenedTree = new FlattenedTree(data, isEditableNode);
 
