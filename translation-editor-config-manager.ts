@@ -10,6 +10,14 @@ export interface TranslationEditorConfig {
    */
   appIdentifier: string;
 
+  appTitle: string;
+
+  githubToken: string | (() => string);
+  
+  githubOrg: string | (() => string);
+
+  githubRepo: string | (() => string);
+
   /**
    A rudimentary extension for arbitrary authentication mechanism. 
    */

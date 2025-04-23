@@ -3,6 +3,10 @@ import { TranslationEditorConfig } from './translation-editor-config-manager.ts'
 export const TRANSLATION_EDITOR_CONFIG: Required<TranslationEditorConfig> = {
   apiUrl: 'http://localhost:8000/create-pr',
   appIdentifier: 'com.axhxrx.app.translation-editor',
+  appTitle: 'Translation Editor',
+  githubToken: 'INVALID_TOKEN_BRO',
+  githubOrg: 'axhxrx',
+  githubRepo: 'translation-editor',
 
   authConfig: {
     authenticate: async () =>

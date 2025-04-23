@@ -300,7 +300,75 @@ export default function Home()
     }
   };
 
-  // New handler function for PR creation
+  /**
+   Post PR-creation request directly to GitHub Actions via REST API.
+   */
+  const postWorkflowRequestToGitHub = async (_payload: {
+    githubOrg: string;
+    repoName: string;
+    baseBranch: string;
+    prTitle: string;
+    prBody: string;
+    proposedChanges: Record<string, EditableNode>;
+  }) =>
+  {
+    const workflowFileName = 'pr-maker-ci.yml'; // Hardcoded name of your workflow file
+    const ghApiUrl =
+      `https://api.github.com/repos/${config.githubOrg}/${config.githubRepo}/actions/workflows/${workflowFileName}/dispatches`;
+
+    const payload = {
+      ref: 'main',// _payload.baseBranch, // The branch where the workflow file is located
+      inputs: {
+        baseBranch: _payload.baseBranch,
+        prTitle: _payload.prTitle,
+        prBody: _payload.prBody,
+        // prLabels: _payload.prLabels,
+        proposedChangesJson: JSON.stringify(_payload.proposedChanges), // Pass the JSON string directly
+      },
+    };
+
+    try 
+    {
+      const response = await fetch(ghApiUrl, {
+        method: 'POST',
+        headers: {
+          Accept: 'application/vnd.github.v3+json',
+          Authorization: `token ${config.githubToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.status === 204)
+      {
+        console.log('✅ Successfully triggered workflow dispatch.');
+
+        alert(`Successfully triggered workflow dispatch. ${response.status} ${response.statusText}\n\n A future version of this app will give you a link to the created PR, but for now you have to go to the PRs page manually and find it. Please note that it may take up to 2 minutes for the PR to appear. If it never appears, please contact UI Core.`);
+
+        setProposedChanges({});
+        setSearchQuery("thank you");
+        setAppMode('edit');
+      }
+      else
+      {
+        console.error(`❌ Failed to trigger workflow dispatch. Status: ${response.status} ${response.statusText}`);
+        const responseBody = await response.text();
+        console.error('Response body:', responseBody);
+        throw new Error(`Failed to trigger workflow dispatch. Status: ${response.status} ${response.statusText}`);
+      }
+    }
+    catch (error)
+    {
+      console.error('❌ Error making API request:', error);
+      alert(`Error making API request: ${error instanceof Error ? error.message : String(error)}`);
+      throw error;
+    }
+  };
+
+
+  /**
+   Create the PR
+   */
   const handleCreatePr = async (title: string, description: string) =>
   {
     console.log('Attempting to create PR...');
@@ -337,61 +405,65 @@ export default function Home()
       baseBranch: revision.baseBranch,
       prTitle: title,
       prBody: description,
-      proposedChanges: reconstructedTree, // Use the reconstructed tree directly
+      proposedChanges: reconstructedTree as any, // Use the reconstructed tree directly
     };
 
-    try
-    {
-      console.log('Sending POST request to:', apiUrl);
-      console.log('Payload:', JSON.stringify(payload, null, 2)); // Log the payload being sent
+    // FIXME: the above as any should be eliminated
 
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
+    await postWorkflowRequestToGitHub(payload)
 
-      if (response.ok)
-      {
-        const responseData = await response.json(); // Or response.text() if it's not JSON
-        console.log('API Success Response:', responseData);
-        alert('SUCCESS: PR creation request sent successfully!');
-        // Optionally clear proposed changes or redirect here
-      }
-      else
-      {
-        // Handle HTTP errors (e.g., 4xx, 5xx)
-        let errorDetails = `Server responded with status: ${response.status}`;
-        try
-        {
-          const errorData = await response.text(); // Try to get more details from body
-          errorDetails += ` - ${errorData}`;
-        }
-        catch (_e)
-        {
-          // Ignore if reading error body fails
-        }
-        console.error('API Error Response:', errorDetails);
-        alert(`Error creating PR: ${errorDetails}`);
-      }
-    }
-    catch (error)
-    {
-      // Handle network errors or other fetch issues
-      console.error('Network or fetch error:', error);
-      alert(
-        `Failed to send request to API: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    }
+    // try
+    // {
+    //   console.log('Sending POST request to:', apiUrl);
+    //   console.log('Payload:', JSON.stringify(payload, null, 2)); // Log the payload being sent
+
+    //   const response = await fetch(apiUrl, {
+    //     method: 'POST',
+    //     headers: {
+    //       'Content-Type': 'application/json',
+    //     },
+    //     body: JSON.stringify(payload),
+    //   });
+
+    //   if (response.ok)
+    //   {
+    //     const responseData = await response.json(); // Or response.text() if it's not JSON
+    //     console.log('API Success Response:', responseData);
+    //     alert('SUCCESS: PR creation request sent successfully!');
+    //     // Optionally clear proposed changes or redirect here
+    //   }
+    //   else
+    //   {
+    //     // Handle HTTP errors (e.g., 4xx, 5xx)
+    //     let errorDetails = `Server responded with status: ${response.status}`;
+    //     try
+    //     {
+    //       const errorData = await response.text(); // Try to get more details from body
+    //       errorDetails += ` - ${errorData}`;
+    //     }
+    //     catch (_e)
+    //     {
+    //       // Ignore if reading error body fails
+    //     }
+    //     console.error('API Error Response:', errorDetails);
+    //     alert(`Error creating PR: ${errorDetails}`);
+    //   }
+    // }
+    // catch (error)
+    // {
+    //   // Handle network errors or other fetch issues
+    //   console.error('Network or fetch error:', error);
+    //   alert(
+    //     `Failed to send request to API: ${error instanceof Error ? error.message : String(error)}`,
+    //   );
+    // }
   };
 
   return (
     <main class='container mx-auto px-4 py-8'>
       {/* Wrap content in Show based on loading state */}
       <Show when={!loading()} fallback={<div>Loading editor state...</div>}>
-        <h1 class='text-2xl font-bold mb-4'>SORACOM Translation Editor</h1>
+        <h1 class='text-2xl font-bold mb-4'>{  config.appTitle }</h1>
 
         {/* Mode-dependent UI */}
         <Show when={appMode() === 'edit'}>
