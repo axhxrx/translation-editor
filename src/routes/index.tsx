@@ -23,6 +23,9 @@ const kProposedChanges = `${appIdentifier}.proposedChanges`;
 const kSearchQuery = `${appIdentifier}.searchQuery`;
 const DEFAULT_QUERY = 'loading...ɓuᴉpɐoʅ...loading...ɓuᴉpɐoʅ';
 
+// Maximum items to show initially / per increment
+const PAGE_SIZE = 100;
+
 export default function Home()
 {
   const [authenticationResult] = createResource(
@@ -60,6 +63,11 @@ export default function Home()
    Search query in the box
    */
   const [searchQuery, setSearchQuery] = createSignal(DEFAULT_QUERY);
+
+  /**
+   Controls how many filtered entries are rendered
+   */
+  const [visibleCount, setVisibleCount] = createSignal(PAGE_SIZE);
 
   /**
    A signal to track loading state, which is used to prevent rendering before we've loaded the proposed changes from localStorage.
@@ -101,6 +109,9 @@ export default function Home()
       Object.prototype.hasOwnProperty.call(currentProposed, entry.keyPathString)
     ).length;
   });
+
+  // Total matches in current filter
+  const totalMatches = createMemo(() => filteredTree().entries.length);
 
   /**
    This effect is the main "app loading" logic, which prevents rendering before we've initialized everything we need (namely, proposed changes from localstorage)
@@ -266,6 +277,7 @@ export default function Home()
     }
 
     setFilteredTree(finalFilteredTree); // Update the signal with the new tree instance
+    setVisibleCount(PAGE_SIZE); // reset visible items on every new search
     if (criteria.mode === 'text' || criteria.mode === 'combined')
     {
       setSearchQuery(criteria.query);
@@ -488,7 +500,12 @@ export default function Home()
         </Show>
 
         {/* Status Bar (Always Visible) */}
-        <StatusBar totalChanges={totalChanges} shownChanges={shownChanges} />
+        <StatusBar
+          totalChanges={totalChanges}
+          shownChanges={shownChanges}
+          visibleMatches={visibleCount}
+          totalMatches={totalMatches}
+        />
 
         {/* Button to switch to Finalize Mode */}
         <Show
@@ -515,7 +532,7 @@ export default function Home()
         </Show>
 
         {/* Translation Editor (Always Visible, content filtered by filteredTree) */}
-        <For each={filteredTree().entries}>
+        <For each={filteredTree().entries.slice(0, visibleCount())}>
           {(entry) => (
             <TranslationEditor
               entry={entry}
@@ -524,6 +541,27 @@ export default function Home()
             />
           )}
         </For>
+        <Show when={visibleCount() < filteredTree().entries.length}>
+          <div class='text-center my-4'>
+            <p class='mb-2 text-sm text-gray-600'>
+              Showing {visibleCount()} of {filteredTree().entries.length} matches. There may be more. Press the <strong>Load More</strong> button to see the next {Math.min(PAGE_SIZE, filteredTree().entries.length - visibleCount())} matches. To show <em>all</em> matches press <strong>Load All</strong>. <span class='italic'>(NOTE: Loading ALL matching translations may take several seconds on some computers, depending on your search.)</span>
+            </p>
+            <button
+              type='button'
+              class='px-4 py-2 mr-2 mb-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none'
+              onClick={() => setVisibleCount(c => Math.min(c + PAGE_SIZE, filteredTree().entries.length))}
+            >
+              Load More
+            </button>
+            <button
+              type='button'
+              class='px-4 py-2 mb-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none'
+              onClick={() => setVisibleCount(filteredTree().entries.length)}
+            >
+              Load All
+            </button>
+          </div>
+        </Show>
       </Show>
       <hr />
       <p style='text-align: center; font-size: xx-small;'>
